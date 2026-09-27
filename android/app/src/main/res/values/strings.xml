@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Finanzas Kawaii</string>
+    <string name="title_activity_main">Finanzas Kawaii</string>
+    <string name="package_name">com.finanzaskawaii.app</string>
+    <string name="custom_url_scheme">com.finanzaskawaii.app</string>
+</resources>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.finanzaskawaii.app",
+  "appName": "Finanzas Kawaii",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  }
+}
