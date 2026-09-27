@@ -4,7 +4,10 @@ import App from './App.jsx';
 import './index.css';
 
 // Configuración de URL base para peticiones API (útil para build móvil / Capacitor)
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const DEFAULT_MOBILE_API = 'http://192.168.100.16:5000';
+const isCapacitor = Boolean(window.Capacitor || window.location.protocol === 'capacitor:' || window.location.protocol === 'file:');
+const API_BASE = import.meta.env.VITE_API_URL || (isCapacitor ? DEFAULT_MOBILE_API : '');
+
 if (API_BASE) {
   const originalFetch = window.fetch;
   window.fetch = (url, options) => {

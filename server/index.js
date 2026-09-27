@@ -36,7 +36,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'"]
+        connectSrc: ["'self'", "http:", "https:"]
       }
     },
     crossOriginEmbedderPolicy: false,
@@ -103,6 +103,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🌸 Servidor Finanzas Kawaii ejecutándose de manera segura en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌸 Servidor Finanzas Kawaii ejecutándose de manera segura en http://0.0.0.0:${PORT}`);
 });
