@@ -32,9 +32,9 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
   }, [isMenuOpen]);
 
   const mainTabs = [
-    { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard, color: '#FFD6E8' },
-    { id: 'calendar', label: 'Calendario', icon: Calendar, color: '#D1F2E2' },
-    { id: 'import-spreadsheet', label: 'Cargar Planilla', icon: FileSpreadsheet, color: '#FFF1C5' },
+    { id: 'dashboard', label: 'Inicio', shortLabel: 'Inicio', icon: LayoutDashboard, color: '#FFD6E8' },
+    { id: 'calendar', label: 'Calendario', shortLabel: 'Calendario', icon: Calendar, color: '#D1F2E2' },
+    { id: 'import-spreadsheet', label: 'Cargar Planilla', shortLabel: 'Planilla', icon: FileSpreadsheet, color: '#FFF1C5' },
   ];
 
   const sectionsMenu = [
@@ -118,7 +118,7 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center justify-center gap-1 sm:gap-1.5 px-0.5 sm:px-2.5 py-1.5 rounded-2xl font-bold text-[9px] xs:text-[10px] sm:text-xs md:text-sm border-2 transition-all min-w-0 w-full ${
+                    className={`flex flex-row flex-nowrap items-center justify-center gap-1 sm:gap-1.5 px-1 sm:px-2.5 py-1.5 rounded-2xl font-bold text-[10px] sm:text-xs md:text-sm border-2 transition-all min-w-0 w-full ${
                       isActive
                         ? 'shadow-kawaii translate-x-[-1px] translate-y-[-1px] !text-[#4A3E3D] !border-[#4A3E3D]'
                         : 'bg-white/70 dark:bg-[#2A2335] hover:bg-white text-[#4A3E3D] dark:text-[#F5E8FB] border-[#4A3E3D] dark:border-[#8A7398]'
@@ -129,8 +129,11 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
                       borderColor: isActive ? '#4A3E3D' : undefined
                     }}
                   >
-                    <Icon size={13} className="shrink-0 sm:w-4 sm:h-4" strokeWidth={2.5} style={{ color: isActive ? '#4A3E3D' : undefined }} />
-                    <span className="whitespace-nowrap">{item.label}</span>
+                    <Icon size={14} className="shrink-0 sm:w-4 sm:h-4" strokeWidth={2.5} style={{ color: isActive ? '#4A3E3D' : undefined }} />
+                    <span className="whitespace-nowrap truncate">
+                      <span className="sm:hidden">{item.shortLabel || item.label}</span>
+                      <span className="hidden sm:inline">{item.label}</span>
+                    </span>
                   </button>
                 );
               })}
@@ -143,7 +146,7 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
                     e.stopPropagation();
                     setIsMenuOpen((prev) => !prev);
                   }}
-                  className={`flex items-center justify-center gap-0.5 sm:gap-1.5 px-0.5 sm:px-2.5 py-1.5 rounded-2xl font-bold text-[9px] xs:text-[10px] sm:text-xs md:text-sm border-2 transition-all min-w-0 w-full ${
+                  className={`flex flex-row flex-nowrap items-center justify-center gap-0.5 sm:gap-1.5 px-1 sm:px-2.5 py-1.5 rounded-2xl font-bold text-[10px] sm:text-xs md:text-sm border-2 transition-all min-w-0 w-full ${
                     sectionsMenu.some((s) => s.id === activeTab)
                       ? 'shadow-kawaii translate-x-[-1px] translate-y-[-1px] !text-[#4A3E3D] !border-[#4A3E3D]'
                       : 'bg-white/80 dark:bg-[#2A2335] text-[#4A3E3D] dark:text-[#F5E8FB] border-[#4A3E3D] dark:border-[#8A7398]'
@@ -154,43 +157,45 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
                     borderColor: sectionsMenu.some((s) => s.id === activeTab) ? '#4A3E3D' : undefined
                   }}
                 >
-                  <Sparkles size={13} className={`shrink-0 sm:w-4 sm:h-4 ${sectionsMenu.some((s) => s.id === activeTab) ? 'text-[#4A3E3D]' : 'text-purple-600'}`} />
-                  <span className="whitespace-nowrap">Secciones</span>
-                  <ChevronDown size={11} className={`shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
+                  <Sparkles size={14} className={`shrink-0 sm:w-4 sm:h-4 ${sectionsMenu.some((s) => s.id === activeTab) ? 'text-[#4A3E3D]' : 'text-purple-600'}`} />
+                  <span className="whitespace-nowrap truncate">Secciones</span>
+                  <ChevronDown size={12} className={`shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isMenuOpen && (
                   <div
-                    className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-[#2A2335] rounded-3xl border-3 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-lg p-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+                    className="absolute right-0 top-full mt-2 w-56 max-w-[85vw] bg-white dark:bg-[#2A2335] rounded-3xl border-3 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-lg p-2 z-50 transition-opacity duration-150"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="px-3 py-1 text-[10px] font-bold text-[#4A3E3D]/60 dark:text-[#F5E8FB]/60 uppercase tracking-widest border-b border-gray-200 dark:border-gray-700 mb-1">
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-[#4A3E3D]/60 dark:text-[#F5E8FB]/60 uppercase tracking-widest border-b-2 border-dashed border-[#4A3E3D]/20 dark:border-[#8A7398]/30 mb-1.5">
                       Módulos de Gestión
                     </div>
-                    {sectionsMenu.map((sec) => {
-                      const Icon = sec.icon;
-                      const isActive = activeTab === sec.id;
-                      return (
-                        <button
-                          key={sec.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveTab(sec.id);
-                            setIsMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all mb-1 ${
-                            isActive
-                              ? 'bg-[#FFD6E8] !text-[#4A3E3D] border border-[#4A3E3D]'
-                              : 'hover:bg-[#FFFDF0] dark:hover:bg-[#1C1724] text-[#4A3E3D] dark:text-[#F5E8FB]'
-                          }`}
-                        >
-                          <span className="p-1 rounded-xl border border-[#4A3E3D]" style={{ backgroundColor: sec.color }}>
-                            <Icon size={14} className="text-[#4A3E3D]" />
-                          </span>
-                          <span>{sec.label}</span>
-                        </button>
-                      );
-                    })}
+                    <div className="space-y-1">
+                      {sectionsMenu.map((sec) => {
+                        const Icon = sec.icon;
+                        const isActive = activeTab === sec.id;
+                        return (
+                          <button
+                            key={sec.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(sec.id);
+                              setIsMenuOpen(false);
+                            }}
+                            className={`w-full flex flex-row items-center gap-2.5 px-3 py-2 rounded-2xl text-xs font-bold transition-all border ${
+                              isActive
+                                ? 'bg-[#FFD6E8] text-[#4A3E3D] border-[#4A3E3D] shadow-kawaii-sm'
+                                : 'bg-transparent border-transparent hover:bg-[#FFFDF0] dark:hover:bg-[#1C1724] text-[#4A3E3D] dark:text-[#F5E8FB]'
+                            }`}
+                          >
+                            <span className="p-1 rounded-xl border border-[#4A3E3D] shrink-0" style={{ backgroundColor: sec.color }}>
+                              <Icon size={14} className="text-[#4A3E3D]" />
+                            </span>
+                            <span className="whitespace-nowrap text-left">{sec.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

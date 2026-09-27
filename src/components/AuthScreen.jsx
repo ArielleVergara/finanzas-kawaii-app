@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Lock, Mail, User as UserIcon, Heart, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Lock, Mail, User as UserIcon, Heart, ShieldAlert, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { sanitizeInput, checkPasswordSecurity } from '../utils/security';
 
 export default function AuthScreen() {
@@ -9,6 +9,7 @@ export default function AuthScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('bunny');
   const [error, setError] = useState('');
@@ -129,15 +130,23 @@ export default function AuthScreen() {
               <div className="relative flex items-center">
                 <Lock className="absolute left-3.5 z-10 pointer-events-none text-[#4A3E3D]/70" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   maxLength={128}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="kawaii-input w-full text-sm"
-                  style={{ paddingLeft: '2.75rem' }}
+                  style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 z-10 text-[#4A3E3D]/70 hover:text-[#4A3E3D] focus:outline-none p-1 rounded-lg transition-colors"
+                  title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
 
               {/* Indicador de Fortaleza de Contraseña en Registro */}
