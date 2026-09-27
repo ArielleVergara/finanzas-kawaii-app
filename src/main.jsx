@@ -4,8 +4,8 @@ import App from './App.jsx';
 import './index.css';
 
 // Configuración de URL base para peticiones API
-// En producción / APK siempre apunta por defecto al backend en la IP de red local
-const DEFAULT_API_URL = 'http://192.168.100.16:5000';
+// Apunta al backend oficial 24/7 seguro en Render (Gratuito y permanente)
+const DEFAULT_API_URL = 'https://finanzas-kawaii-backend.onrender.com';
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : DEFAULT_API_URL);
 
 if (API_BASE) {
