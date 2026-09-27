@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FFFDF0;
+    color: #4A3E3D;
+    font-family: 'Fredoka', 'Nunito', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .dark body {
+    background-color: #1C1724;
+    color: #F5E8FB;
+  }
+}
+
+/* Custom Kawaii Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFFDF0;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1C1724;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FFD6E8;
+  border: 2px solid #4A3E3D;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #5E476B;
+  border-color: #8A7398;
+}
+
+/* Kawaii Squircle Buttons & Cards */
+.kawaii-btn {
+  @apply font-bold transition-all duration-200 active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer select-none rounded-2xl border-3 border-[#4A3E3D] shadow-kawaii dark:border-[#8A7398] dark:shadow-kawaii-dark;
+}
+
+.kawaii-card {
+  @apply rounded-3xl border-3 border-[#4A3E3D] bg-white p-5 shadow-kawaii transition-all dark:bg-[#2A2335] dark:border-[#8A7398] dark:shadow-kawaii-dark dark:text-[#F5E8FB];
+}
+
+.kawaii-input {
+  @apply rounded-2xl border-2 border-[#4A3E3D] bg-[#FFFDF0] px-4 py-2 text-[#4A3E3D] focus:outline-none focus:ring-2 focus:ring-[#FFD6E8] dark:bg-[#1C1724] dark:border-[#8A7398] dark:text-[#F5E8FB] dark:focus:ring-[#E3D5FF];
+}
+
+.border-3 {
+  border-width: 3px;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  display: inline-block;
+  animation: spin-slow 8s linear infinite;
+}
