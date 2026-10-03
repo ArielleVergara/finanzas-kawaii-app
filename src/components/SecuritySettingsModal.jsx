@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSecurity } from '../context/SecurityContext';
-import { ShieldCheck, Lock, KeyRound, Check, X, Smartphone, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, KeyRound, Check, X, Smartphone, AlertTriangle, Download, Upload, Database } from 'lucide-react';
+import { exportBackupJSON, importBackupJSON } from '../utils/localDB';
 
 export default function SecuritySettingsModal({ isOpen, onClose }) {
   const { hasPin, pin, setPin, lockNow } = useSecurity();
@@ -8,8 +9,41 @@ export default function SecuritySettingsModal({ isOpen, onClose }) {
   const [confirmPin, setConfirmPin] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
+
+  const handleExportBackup = () => {
+    const res = exportBackupJSON();
+    if (res.success) {
+      setIsError(false);
+      setMessage(`¡Copia de seguridad guardada como "${res.filename}"! 🌸`);
+    } else {
+      setIsError(true);
+      setMessage('Error al generar la copia de seguridad: ' + res.error);
+    }
+  };
+
+  const handleImportBackupFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const res = importBackupJSON(event.target.result);
+      if (res.success) {
+        setIsError(false);
+        setMessage('¡Copia de seguridad restaurada exitosamente! Recargando datos... 🌸✨');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else {
+        setIsError(true);
+        setMessage('Error al restaurar respaldo: ' + res.error);
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleSavePin = (e) => {
     e.preventDefault();
@@ -56,8 +90,8 @@ export default function SecuritySettingsModal({ isOpen, onClose }) {
             <ShieldCheck className="text-[#4A3E3D]" size={26} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-[#4A3E3D]">Seguridad & OWASP MASVS</h2>
-            <p className="text-xs text-[#4A3E3D]/80">Protección para la App Móvil Android 🔒</p>
+            <h2 className="text-xl font-bold text-[#4A3E3D]">Seguridad</h2>
+            <p className="text-xs text-[#4A3E3D]/80">Ajustes de PIN y Copias de Seguridad 🔒</p>
           </div>
         </div>
 
@@ -105,6 +139,40 @@ export default function SecuritySettingsModal({ isOpen, onClose }) {
             <span className="px-2.5 py-1 rounded-xl bg-emerald-200 border border-[#4A3E3D] text-[11px] font-bold text-emerald-900 flex items-center gap-1">
               <Check size={12} /> 100% Protegido
             </span>
+          </div>
+        </div>
+
+        {/* Sección Copias de Seguridad (Backup & Restore) */}
+        <div className="mb-5 bg-[#FFFDF0] p-4 rounded-2xl border-2 border-[#4A3E3D] space-y-3">
+          <h3 className="text-xs font-bold text-[#4A3E3D] flex items-center gap-1.5">
+            <Database size={16} className="text-purple-600" />
+            Copia de Seguridad y Respaldos (Offline)
+          </h3>
+          <p className="text-[11px] text-[#4A3E3D]/80">
+            Guarda una copia de tus finanzas en tu dispositivo o restaura una copia anterior al actualizar la app.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleExportBackup}
+              className="kawaii-btn bg-[#FFF1C5] hover:bg-[#FFE6C7] text-[#4A3E3D] py-2 px-2 text-xs font-bold flex items-center justify-center gap-1.5"
+            >
+              <Download size={14} /> Exportar Backup
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="kawaii-btn bg-[#D0F4DE] hover:bg-[#B5EAD7] text-[#4A3E3D] py-2 px-2 text-xs font-bold flex items-center justify-center gap-1.5"
+            >
+              <Upload size={14} /> Restaurar Backup
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".json"
+              onChange={handleImportBackupFile}
+              className="hidden"
+            />
           </div>
         </div>
 
