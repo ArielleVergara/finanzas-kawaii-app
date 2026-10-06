@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import KawaiiIcon, { availableIcons } from './KawaiiIcon';
-import { Tags, Plus, Trash2, Sparkles, Check } from 'lucide-react';
+import { Tags, Plus, Trash2, Edit2, X, Sparkles, Check } from 'lucide-react';
 import { sanitizeInput } from '../utils/security';
 
 export default function CategoryManager() {
@@ -11,6 +11,7 @@ export default function CategoryManager() {
   const [type, setType] = useState('expense');
   const [color, setColor] = useState('#FFD6E8');
   const [icon, setIcon] = useState('tag');
+  const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const colorsList = [
@@ -22,6 +23,22 @@ export default function CategoryManager() {
     { name: 'Cielo', hex: '#D0F4DE' },
   ];
 
+  const handleEdit = (cat) => {
+    setEditingId(cat.id);
+    setName(cat.name || '');
+    setType(cat.type || 'expense');
+    setColor(cat.color || '#FFD6E8');
+    setIcon(cat.icon || 'tag');
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setName('');
+    setType('expense');
+    setColor('#FFD6E8');
+    setIcon('tag');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const cleanName = sanitizeInput(name, 50).trim();
@@ -29,18 +46,31 @@ export default function CategoryManager() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/categories', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ name: cleanName, type, icon, color })
-      });
+      if (editingId) {
+        const res = await fetch(`/api/categories/${editingId}`, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ name: cleanName, type, icon, color })
+        });
 
-      if (res.ok) {
-        setName('');
-        refreshAllData();
+        if (res.ok) {
+          resetForm();
+          refreshAllData();
+        }
+      } else {
+        const res = await fetch('/api/categories', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ name: cleanName, type, icon, color })
+        });
+
+        if (res.ok) {
+          resetForm();
+          refreshAllData();
+        }
       }
     } catch (err) {
-      console.error('Error al crear categoría:', err);
+      console.error('Error al guardar categoría:', err);
     } finally {
       setLoading(false);
     }
@@ -67,16 +97,26 @@ export default function CategoryManager() {
           <Tags className="text-pink-600 dark:text-pink-400" size={28} />
           <span>Clasificaciones de Gastos e Ingresos</span>
         </h2>
-        <p className="text-xs text-[#4A3E3D]/80 dark:text-[#F5E8FB]/80">Personaliza tus categorías predeterminadas y crea tus propias clasificaciones con colores Kawaii</p>
+        <p className="text-xs text-[#4A3E3D]/80 dark:text-[#F5E8FB]/80">Personaliza tus categorías predeterminadas y crea/edita clasificaciones con colores Kawaii</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulario */}
         <div className="kawaii-card bg-[#FFE6C7]/40 dark:bg-[#2A2335] lg:col-span-1 h-fit">
-          <h3 className="text-base font-bold text-[#4A3E3D] dark:text-[#F5E8FB] mb-4 flex items-center gap-2">
-            <Plus size={18} />
-            <span>Nueva Clasificación</span>
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-[#4A3E3D] dark:text-[#F5E8FB] flex items-center gap-2">
+              <Plus size={18} />
+              <span>{editingId ? 'Editar Clasificación' : 'Nueva Clasificación'}</span>
+            </h3>
+            {editingId && (
+              <button
+                onClick={resetForm}
+                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1"
+              >
+                <X size={14} /> Cancelar
+              </button>
+            )}
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
@@ -158,7 +198,7 @@ export default function CategoryManager() {
               className="kawaii-btn w-full bg-[#FFE6C7] hover:bg-amber-200 text-[#4A3E3D] py-2.5 text-sm flex items-center justify-center gap-2 mt-4"
             >
               <Sparkles size={16} />
-              <span>{loading ? 'Guardando...' : 'Crear Categoría'}</span>
+              <span>{loading ? 'Guardando...' : editingId ? 'Actualizar Categoría' : 'Crear Categoría'}</span>
             </button>
           </form>
         </div>
@@ -193,15 +233,24 @@ export default function CategoryManager() {
                     </div>
                   </div>
 
-                  {cat.is_default === 0 && (
+                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="p-1 rounded-xl bg-white/80 hover:bg-rose-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
-                      title="Eliminar categoría personalizada"
+                      onClick={() => handleEdit(cat)}
+                      className="p-1 rounded-xl bg-white/80 hover:bg-purple-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
+                      title="Editar clasificación"
                     >
-                      <Trash2 size={14} />
+                      <Edit2 size={14} />
                     </button>
-                  )}
+                    {cat.is_default === 0 && (
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        className="p-1 rounded-xl bg-white/80 hover:bg-rose-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
+                        title="Eliminar clasificación personalizada"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -235,15 +284,24 @@ export default function CategoryManager() {
                     </div>
                   </div>
 
-                  {cat.is_default === 0 && (
+                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="p-1 rounded-xl bg-white/80 hover:bg-rose-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
-                      title="Eliminar categoría personalizada"
+                      onClick={() => handleEdit(cat)}
+                      className="p-1 rounded-xl bg-white/80 hover:bg-purple-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
+                      title="Editar clasificación"
                     >
-                      <Trash2 size={14} />
+                      <Edit2 size={14} />
                     </button>
-                  )}
+                    {cat.is_default === 0 && (
+                      <button
+                        onClick={() => handleDelete(cat.id)}
+                        className="p-1 rounded-xl bg-white/80 hover:bg-rose-100 text-[#4A3E3D] border border-[#4A3E3D] transition-colors"
+                        title="Eliminar clasificación personalizada"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

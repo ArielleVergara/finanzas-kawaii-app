@@ -44,6 +44,27 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
+// Editar categoría personalizada o predeterminada
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { name, type, icon, color } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
+
+    await runQuery(
+      `UPDATE categories
+       SET name = ?, type = ?, icon = ?, color = ?
+       WHERE id = ? AND user_id = ?`,
+      [name.trim(), type || 'expense', icon || 'tag', color || '#FFD6E8', req.params.id, req.user.id]
+    );
+
+    res.json({ message: 'Categoría actualizada correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar la categoría' });
+  }
+});
+
 // Eliminar categoría personalizada
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
