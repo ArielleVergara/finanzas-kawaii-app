@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Lock, Mail, User as UserIcon, Heart, ShieldAlert, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, Lock, Mail, User as UserIcon, Heart, ShieldAlert, CheckCircle2, Eye, EyeOff, UserCheck, RefreshCw } from 'lucide-react';
 import { sanitizeInput, checkPasswordSecurity } from '../utils/security';
 
 export default function AuthScreen() {
-  const { login, register } = useAuth();
+  const { login, register, rememberedUser, forgetRememberedUser } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
 
   const [email, setEmail] = useState('');
@@ -24,13 +24,18 @@ export default function AuthScreen() {
     { id: 'star', emoji: '⭐', label: 'Estrellita' },
   ];
 
+  useEffect(() => {
+    if (rememberedUser && rememberedUser.email && !isRegister) {
+      setEmail(rememberedUser.email);
+    }
+  }, [rememberedUser, isRegister]);
+
   const passwordSecurity = checkPasswordSecurity(password);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Sanitizar inputs antes del envío
     const cleanEmail = sanitizeInput(email, 100).toLowerCase().trim();
     const cleanName = sanitizeInput(name, 60).trim();
 
@@ -56,6 +61,8 @@ export default function AuthScreen() {
     }
   };
 
+  const currentAvatarEmoji = avatars.find(a => a.id === rememberedUser?.avatar)?.emoji || '🌸';
+
   return (
     <div className="min-h-screen bg-[#FFFDF0] flex items-center justify-center p-4 font-kawaii selection:bg-[#FFD6E8]">
       <div className="max-w-md w-full">
@@ -77,9 +84,42 @@ export default function AuthScreen() {
           <div className="flex items-center justify-center gap-2 mb-4 bg-[#FFF1C5] py-2 rounded-2xl border-2 border-[#4A3E3D]">
             <Heart size={16} className="text-rose-500 fill-rose-500" />
             <span className="text-xs font-bold text-[#4A3E3D]">
-              {isRegister ? 'Crear una nueva cuenta segura' : 'Ingresa a tu cuenta para continuar'}
+              {isRegister
+                ? 'Crear una nueva cuenta segura'
+                : rememberedUser
+                ? `¡Hola de nuevo, ${rememberedUser.name}! 🌸`
+                : 'Ingresa a tu cuenta para continuar'}
             </span>
           </div>
+
+          {/* Ficha de Usuario Recordado (Iniciar sesión como [Nombre]) */}
+          {rememberedUser && !isRegister && (
+            <div className="mb-4 p-3 bg-[#D1F2E2]/60 rounded-2xl border-2 border-[#4A3E3D] flex items-center justify-between gap-2 shadow-kawaii-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-white border-2 border-[#4A3E3D] flex items-center justify-center text-xl shrink-0 shadow-kawaii-sm">
+                  {currentAvatarEmoji}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-[#4A3E3D] truncate">
+                    Iniciar sesión como <span className="underline decoration-emerald-500 decoration-2">{rememberedUser.name}</span>
+                  </p>
+                  <p className="text-[11px] text-[#4A3E3D]/75 font-medium truncate">{rememberedUser.email}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  forgetRememberedUser();
+                  setEmail('');
+                }}
+                className="text-[10px] font-bold text-rose-800 bg-white hover:bg-rose-50 px-2 py-1 rounded-xl border border-[#4A3E3D] shrink-0 transition-transform active:scale-95"
+                title="Usar otro correo o cuenta"
+              >
+                Usar otra cuenta
+              </button>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 rounded-2xl bg-[#FFB7B2] border-2 border-[#4A3E3D] text-xs font-bold text-[#4A3E3D] text-center flex items-center justify-center gap-2">
@@ -108,34 +148,39 @@ export default function AuthScreen() {
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-bold text-[#4A3E3D] mb-1">Correo Electrónico</label>
-              <div className="relative flex items-center">
-                <Mail className="absolute left-3.5 z-10 pointer-events-none text-[#4A3E3D]/70" size={18} />
-                <input
-                  type="email"
-                  required
-                  maxLength={100}
-                  value={email}
-                  onChange={(e) => setEmail(sanitizeInput(e.target.value, 100))}
-                  placeholder="hola@ejemplo.com"
-                  className="kawaii-input w-full text-sm"
-                  style={{ paddingLeft: '2.75rem' }}
-                />
+            {(!rememberedUser || isRegister) && (
+              <div>
+                <label className="block text-xs font-bold text-[#4A3E3D] mb-1">Correo Electrónico</label>
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3.5 z-10 pointer-events-none text-[#4A3E3D]/70" size={18} />
+                  <input
+                    type="email"
+                    required
+                    maxLength={100}
+                    value={email}
+                    onChange={(e) => setEmail(sanitizeInput(e.target.value, 100))}
+                    placeholder="hola@ejemplo.com"
+                    className="kawaii-input w-full text-sm"
+                    style={{ paddingLeft: '2.75rem' }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
-              <label className="block text-xs font-bold text-[#4A3E3D] mb-1">Contraseña</label>
+              <label className="block text-xs font-bold text-[#4A3E3D] mb-1">
+                Contraseña {rememberedUser && !isRegister ? `de ${rememberedUser.name}` : ''}
+              </label>
               <div className="relative flex items-center">
                 <Lock className="absolute left-3.5 z-10 pointer-events-none text-[#4A3E3D]/70" size={18} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoFocus={Boolean(rememberedUser && !isRegister)}
                   maxLength={128}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Ingresa tu clave..."
                   className="kawaii-input w-full text-sm"
                   style={{ paddingLeft: '2.75rem', paddingRight: '2.5rem' }}
                 />
@@ -206,7 +251,15 @@ export default function AuthScreen() {
               className="kawaii-btn w-full bg-[#FFD6E8] hover:bg-[#FFB7B2] text-[#4A3E3D] py-3 text-base flex items-center justify-center gap-2 mt-4"
             >
               <Sparkles size={18} />
-              <span>{loading ? 'Cargando...' : isRegister ? '¡Crear mi cuenta!' : 'Iniciar Sesión'}</span>
+              <span>
+                {loading
+                  ? 'Cargando...'
+                  : isRegister
+                  ? '¡Crear mi cuenta!'
+                  : rememberedUser
+                  ? `Iniciar sesión como ${rememberedUser.name}`
+                  : 'Iniciar Sesión'}
+              </span>
             </button>
           </form>
 
