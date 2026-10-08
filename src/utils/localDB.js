@@ -239,14 +239,49 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
   if (path === '/api/bank-accounts') {
     if (method === 'GET') {
       const totalBalance = db.bank_accounts.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
-      const totalCreditLimit = db.bank_accounts.reduce((sum, a) => sum + (Number(a.credit_limit) || 0), 0);
+      const totalCreditLimit = db.bank_accounts
+        .filter(a => Number(a.has_credit_card) === 1)
+        .reduce((sum, a) => sum + (Number(a.credit_limit) || 0), 0);
+
+      let totalProjectedDaily = 0;
+      let totalProjectedMonthly = 0;
+      let totalProjectedAnnual = 0;
+
+      const enrichedAccounts = db.bank_accounts.map(acc => {
+        const balance = Number(acc.balance) || 0;
+        const isSavings = Number(acc.is_savings) === 1;
+        const rate = Number(acc.interest_rate || acc.annual_return_rate) || 0;
+
+        let dailyYield = 0;
+        let monthlyYield = 0;
+        let annualYield = 0;
+
+        if (isSavings && rate > 0) {
+          annualYield = balance * (rate / 100);
+          monthlyYield = annualYield / 12;
+          dailyYield = annualYield / 365;
+
+          totalProjectedDaily += dailyYield;
+          totalProjectedMonthly += monthlyYield;
+          totalProjectedAnnual += annualYield;
+        }
+
+        return {
+          ...acc,
+          projected_daily_yield: Math.round(dailyYield),
+          projected_monthly_yield: Math.round(monthlyYield),
+          projected_annual_yield: Math.round(annualYield)
+        };
+      });
+
       const projectedReturns = {
-        daily: Math.round(totalBalance * 0.05 / 365),
-        monthly: Math.round(totalBalance * 0.05 / 12),
-        annual: Math.round(totalBalance * 0.05)
+        daily: Math.round(totalProjectedDaily),
+        monthly: Math.round(totalProjectedMonthly),
+        annual: Math.round(totalProjectedAnnual)
       };
+
       return makeResponse({
-        accounts: db.bank_accounts,
+        accounts: enrichedAccounts,
         total_balance: totalBalance,
         total_credit_limit: totalCreditLimit,
         projected_returns: projectedReturns
