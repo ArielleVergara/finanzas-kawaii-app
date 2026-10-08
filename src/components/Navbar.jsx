@@ -79,14 +79,6 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
             {/* En Móvil y Tablet (< lg): Botones de Acción integrados */}
             <div className="flex lg:hidden items-center gap-1.5 shrink-0">
               <button
-                onClick={() => setIsProfileOpen(true)}
-                className="p-1.5 rounded-xl bg-[#FFD6E8] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-105 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
-                title="Editar Usuario 👤"
-              >
-                <User size={16} className="text-rose-700 dark:text-rose-300" />
-              </button>
-
-              <button
                 onClick={() => setIsSecurityOpen(true)}
                 className="p-1.5 rounded-xl bg-[#E3D5FF] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-105 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
                 title="Ajustes de Seguridad 🔒"
@@ -220,14 +212,6 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
 
           {/* Botones de Acción Escritorio (lg:) */}
           <div className="hidden lg:flex items-center justify-end gap-2 shrink-0">
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="p-2 rounded-2xl bg-[#FFD6E8] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-110 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
-              title="Editar Perfil de Usuario 👤"
-            >
-              <User size={18} className="text-rose-700 dark:text-rose-300" />
-            </button>
-
             <button
               onClick={() => setIsSecurityOpen(true)}
               className="p-2 rounded-2xl bg-[#E3D5FF] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-110 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
