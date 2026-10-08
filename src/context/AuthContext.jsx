@@ -80,10 +80,16 @@ export const AuthProvider = ({ children }) => {
 
     // Modo local / offline fallback
     const localToken = 'local-token-kawaii';
+    let fallbackName = rememberedUser?.email === email ? rememberedUser.name : '';
+    if (!fallbackName) {
+      const handle = email.split('@')[0];
+      fallbackName = handle ? handle.charAt(0).toUpperCase() + handle.slice(1) : 'Usuario Kawaii';
+    }
     const localUser = {
       id: 'local-user',
-      name: rememberedUser?.email === email ? rememberedUser.name : 'Usuario Kawaii',
-      email
+      name: fallbackName,
+      email,
+      avatar: rememberedUser?.email === email ? rememberedUser.avatar : 'bunny'
     };
     localStorage.setItem('kawaii_token', localToken);
     setToken(localToken);

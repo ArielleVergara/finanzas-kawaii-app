@@ -169,17 +169,24 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
 
   // --- AUTH ENDPOINTS ---
   if (path === '/api/auth/me') {
-    const user = db.users[0] || { id: 'local-user', name: 'Usuario Kawaii', email: 'usuario@kawaii.app' };
+    const user = db.users[0] || { id: 'local-user', name: 'Usuario Kawaii', email: 'usuario@kawaii.app', avatar: 'bunny' };
     return makeResponse({ user });
   }
   if (path === '/api/auth/login' || path === '/api/auth/register') {
-    const name = body.name || 'Usuario Kawaii';
     const email = body.email || 'usuario@kawaii.app';
-    const user = { id: 'local-user', name, email };
-    if (!db.users.some(u => u.id === user.id)) {
-      db.users.push(user);
-      saveLocalDB(db);
+    let name = body.name;
+    if (!name) {
+      if (db.users[0] && db.users[0].email === email && db.users[0].name) {
+        name = db.users[0].name;
+      } else {
+        const handle = email.split('@')[0];
+        name = handle ? handle.charAt(0).toUpperCase() + handle.slice(1) : 'Usuario Kawaii';
+      }
     }
+    const avatar = body.avatar || (db.users[0] && db.users[0].avatar) || 'bunny';
+    const user = { id: 'local-user', name, email, avatar };
+    db.users = [user];
+    saveLocalDB(db);
     return makeResponse({ token: 'local-token-kawaii', user });
   }
 
