@@ -3,14 +3,16 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Calendar, ShoppingCart, DollarSign,
   Landmark, Tags, LogOut, FileSpreadsheet,
-  Moon, Sun, ChevronDown, Sparkles, ShieldCheck
+  Moon, Sun, ChevronDown, Sparkles, ShieldCheck, User
 } from 'lucide-react';
 import SecuritySettingsModal from './SecuritySettingsModal';
+import UserProfileModal from './UserProfileModal';
 
 export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode }) {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -77,6 +79,14 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
             {/* En Móvil y Tablet (< lg): Botones de Acción integrados */}
             <div className="flex lg:hidden items-center gap-1.5 shrink-0">
               <button
+                onClick={() => setIsProfileOpen(true)}
+                className="p-1.5 rounded-xl bg-[#FFD6E8] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-105 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
+                title="Editar Usuario 👤"
+              >
+                <User size={16} className="text-rose-700 dark:text-rose-300" />
+              </button>
+
+              <button
                 onClick={() => setIsSecurityOpen(true)}
                 className="p-1.5 rounded-xl bg-[#E3D5FF] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-105 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
                 title="Ajustes de Seguridad 🔒"
@@ -94,8 +104,14 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
 
               {user && (
                 <div className="flex items-center gap-1 bg-white dark:bg-[#2A2335] px-2 py-1 rounded-xl border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm">
-                  <span className="text-sm">{avatarEmojis[user.avatar] || '🐰'}</span>
-                  <span className="text-xs font-bold text-[#4A3E3D] dark:text-[#F5E8FB] max-w-[70px] truncate">{user.name}</span>
+                  <button
+                    onClick={() => setIsProfileOpen(true)}
+                    className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    title="Editar información de usuario"
+                  >
+                    <span className="text-sm">{avatarEmojis[user.avatar] || '🐰'}</span>
+                    <span className="text-xs font-bold text-[#4A3E3D] dark:text-[#F5E8FB] max-w-[70px] truncate">{user.name}</span>
+                  </button>
                   <button
                     onClick={logout}
                     title="Cerrar sesión"
@@ -205,6 +221,14 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
           {/* Botones de Acción Escritorio (lg:) */}
           <div className="hidden lg:flex items-center justify-end gap-2 shrink-0">
             <button
+              onClick={() => setIsProfileOpen(true)}
+              className="p-2 rounded-2xl bg-[#FFD6E8] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-110 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
+              title="Editar Perfil de Usuario 👤"
+            >
+              <User size={18} className="text-rose-700 dark:text-rose-300" />
+            </button>
+
+            <button
               onClick={() => setIsSecurityOpen(true)}
               className="p-2 rounded-2xl bg-[#E3D5FF] dark:bg-[#5E476B] border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm hover:scale-110 transition-transform text-[#4A3E3D] dark:text-[#F5E8FB]"
               title="Ajustes de Seguridad y PIN 🔒"
@@ -222,8 +246,14 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
 
             {user && (
               <div className="flex items-center gap-2 bg-white dark:bg-[#2A2335] px-3 py-1.5 rounded-2xl border-2 border-[#4A3E3D] dark:border-[#8A7398] shadow-kawaii-sm">
-                <span className="text-xl">{avatarEmojis[user.avatar] || '🐰'}</span>
-                <span className="text-xs font-bold text-[#4A3E3D] dark:text-[#F5E8FB] max-w-[90px] truncate">{user.name}</span>
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="flex items-center gap-2 text-left hover:opacity-80 transition-opacity"
+                  title="Editar datos de usuario guardados en BD 👤"
+                >
+                  <span className="text-xl">{avatarEmojis[user.avatar] || '🐰'}</span>
+                  <span className="text-xs font-bold text-[#4A3E3D] dark:text-[#F5E8FB] max-w-[90px] truncate">{user.name}</span>
+                </button>
                 <button
                   onClick={logout}
                   title="Cerrar sesión"
@@ -242,7 +272,18 @@ export default function Navbar({ activeTab, setActiveTab, darkMode, setDarkMode 
       <SecuritySettingsModal
         isOpen={isSecurityOpen}
         onClose={() => setIsSecurityOpen(false)}
+        onOpenProfile={() => {
+          setIsSecurityOpen(false);
+          setIsProfileOpen(true);
+        }}
+      />
+
+      {/* Modal de Editar Perfil de Usuario */}
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
     </>
   );
 }
+

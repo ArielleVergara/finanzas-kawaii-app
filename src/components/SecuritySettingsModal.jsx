@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { useSecurity } from '../context/SecurityContext';
-import { ShieldCheck, Lock, KeyRound, Check, X, Smartphone, Download, Upload, Database, Copy, FileText } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ShieldCheck, Lock, KeyRound, Check, X, Smartphone, Download, Upload, Database, Copy, FileText, User, Edit3 } from 'lucide-react';
 import { exportBackupJSON, importBackupJSON, getLocalDB } from '../utils/localDB';
 
-export default function SecuritySettingsModal({ isOpen, onClose }) {
+export default function SecuritySettingsModal({ isOpen, onClose, onOpenProfile }) {
   const { hasPin, pin, setPin, lockNow } = useSecurity();
+  const { user } = useAuth();
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [message, setMessage] = useState('');
@@ -145,8 +147,8 @@ export default function SecuritySettingsModal({ isOpen, onClose }) {
             <ShieldCheck className="text-[#4A3E3D]" size={26} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-[#4A3E3D] dark:text-[#F5E8FB]">Seguridad</h2>
-            <p className="text-xs text-[#4A3E3D]/80 dark:text-[#F5E8FB]/80">Ajustes de PIN y Copias de Seguridad 🔒</p>
+            <h2 className="text-xl font-bold text-[#4A3E3D] dark:text-[#F5E8FB]">Seguridad y Ajustes</h2>
+            <p className="text-xs text-[#4A3E3D]/80 dark:text-[#F5E8FB]/80">Perfil, PIN y Copias de Seguridad 🔒</p>
           </div>
         </div>
 
@@ -157,6 +159,26 @@ export default function SecuritySettingsModal({ isOpen, onClose }) {
             }`}
           >
             {message}
+          </div>
+        )}
+
+        {/* Ficha de Información de Usuario Guardada */}
+        {user && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-[#FFD6E8]/60 dark:bg-[#5E476B]/60 border-2 border-[#4A3E3D] dark:border-[#8A7398] flex items-center justify-between gap-2 shadow-kawaii-sm">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase font-bold text-[#4A3E3D]/70 dark:text-[#F5E8FB]/70 tracking-wider">Usuario en Base de Datos</p>
+              <p className="text-xs font-extrabold text-[#4A3E3D] dark:text-[#F5E8FB] truncate">{user.name}</p>
+              <p className="text-[11px] text-[#4A3E3D]/80 dark:text-[#F5E8FB]/80 truncate">{user.email}</p>
+            </div>
+            {onOpenProfile && (
+              <button
+                type="button"
+                onClick={onOpenProfile}
+                className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-[#2A2335] hover:bg-[#FFF1C5] border-2 border-[#4A3E3D] dark:border-[#8A7398] text-xs font-bold text-[#4A3E3D] dark:text-[#F5E8FB] flex items-center gap-1.5 shrink-0 shadow-kawaii-sm transition-transform active:scale-95"
+              >
+                <Edit3 size={13} /> Editar
+              </button>
+            )}
           </div>
         )}
 

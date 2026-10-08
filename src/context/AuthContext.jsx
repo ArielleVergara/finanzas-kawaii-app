@@ -41,8 +41,22 @@ export const AuthProvider = ({ children }) => {
         .then((res) => res.json())
         .then((data) => {
           if (data && data.user) {
-            setUser(data.user);
-            saveRememberedUser(data.user);
+            let activeUser = data.user;
+            if (activeUser.email === 'usuario@kawaii.app' && rememberedUser && rememberedUser.email && rememberedUser.email !== 'usuario@kawaii.app') {
+              activeUser = {
+                id: activeUser.id || 'local-user',
+                name: rememberedUser.name || activeUser.name,
+                email: rememberedUser.email,
+                avatar: rememberedUser.avatar || activeUser.avatar || 'bunny'
+              };
+              fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(activeUser)
+              }).catch(() => {});
+            }
+            setUser(activeUser);
+            saveRememberedUser(activeUser);
           } else {
             const fallbackUser = rememberedUser || { id: 'local-user', name: 'Usuario Kawaii', email: 'usuario@kawaii.app' };
             setUser(fallbackUser);
@@ -58,6 +72,42 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, [token]);
+
+  const updateProfile = async ({ name, email, avatar }) => {
+    const cleanName = (name || '').trim() || 'Usuario Kawaii';
+    const cleanEmail = (email || '').trim() || 'usuario@kawaii.app';
+    const cleanAvatar = avatar || user?.avatar || 'bunny';
+
+    const updatedUser = {
+      id: user?.id || 'local-user',
+      name: cleanName,
+      email: cleanEmail,
+      avatar: cleanAvatar
+    };
+
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedUser)
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setUser(data.user);
+        saveRememberedUser(data.user);
+        return data.user;
+      }
+    } catch (e) {
+      console.warn('Error en API profile update, actualizando localmente:', e);
+    }
+
+    setUser(updatedUser);
+    saveRememberedUser(updatedUser);
+    return updatedUser;
+  };
 
   const login = async (email, password) => {
     try {
@@ -134,7 +184,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, rememberedUser, forgetRememberedUser, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, rememberedUser, forgetRememberedUser, login, register, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );
