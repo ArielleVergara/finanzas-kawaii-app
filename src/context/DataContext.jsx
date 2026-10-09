@@ -30,13 +30,13 @@ export const DataProvider = ({ children }) => {
     } catch (e) { console.error(e); }
   }, [token, authHeaders]);
 
-  const loadBankAccounts = useCallback(async () => {
+  const loadBankAccounts = useCallback(async (year = selectedYear, month = selectedMonth) => {
     if (!token) return;
     try {
-      const res = await fetch('/api/bank-accounts', { headers: authHeaders() });
+      const res = await fetch(`/api/bank-accounts?year=${year}&month=${month}`, { headers: authHeaders() });
       if (res.ok) setBankAccountsData(await res.json());
     } catch (e) { console.error(e); }
-  }, [token, authHeaders]);
+  }, [token, selectedYear, selectedMonth, authHeaders]);
 
   const loadIncomes = useCallback(async () => {
     if (!token) return;

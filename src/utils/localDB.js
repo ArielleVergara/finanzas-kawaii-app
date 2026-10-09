@@ -236,9 +236,13 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
   }
 
   // --- HELPER DE CÁLCULO DE SALDO DISPONIBLE EN CUENTAS BANCARIAS ---
-  const calculateAccountBalance = (acc, dbData) => {
+  const calculateAccountBalance = (acc, dbData, datePrefix) => {
     const paidIncomes = (dbData.incomes || [])
-      .filter(inc => inc.bank_account_id === acc.id && inc.status === 'pagado')
+      .filter(inc => {
+        if (inc.bank_account_id !== acc.id || inc.status !== 'pagado') return false;
+        if (datePrefix && inc.date) return inc.date.startsWith(datePrefix);
+        return true;
+      })
       .reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
 
     let paidExpenses = 0;
@@ -248,21 +252,33 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
         if (installments && installments.length > 0) {
           installments.forEach(ei => {
             if (ei.status === 'pagado') {
-              paidExpenses += Number(ei.amount) || 0;
+              if (!datePrefix || (ei.due_date && ei.due_date.startsWith(datePrefix))) {
+                paidExpenses += Number(ei.amount) || 0;
+              }
             }
           });
         } else if (exp.status === 'pagado') {
-          paidExpenses += Number(exp.total_amount) || 0;
+          if (!datePrefix || (exp.start_date && exp.start_date.startsWith(datePrefix))) {
+            paidExpenses += Number(exp.total_amount) || 0;
+          }
         }
       }
     });
 
     const transfersIn = (dbData.transfers || [])
-      .filter(t => t.destination_account_id === acc.id || t.target_account_id === acc.id)
+      .filter(t => {
+        if (t.destination_account_id !== acc.id && t.target_account_id !== acc.id) return false;
+        if (datePrefix && t.date) return t.date.startsWith(datePrefix);
+        return true;
+      })
       .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
     const transfersOut = (dbData.transfers || [])
-      .filter(t => t.origin_account_id === acc.id || t.source_account_id === acc.id)
+      .filter(t => {
+        if (t.origin_account_id !== acc.id && t.source_account_id !== acc.id) return false;
+        if (datePrefix && t.date) return t.date.startsWith(datePrefix);
+        return true;
+      })
       .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
     let baseBal = acc.base_balance;
@@ -278,14 +294,26 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
   };
 
   // --- BANK ACCOUNTS ENDPOINTS ---
-  if (path === '/api/bank-accounts') {
+  if (path === '/api/bank-accounts' || path.startsWith('/api/bank-accounts?')) {
     if (method === 'GET') {
+      const yearParam = searchParams.get('year');
+      const monthParam = searchParams.get('month');
+      let datePrefix = null;
+      if (yearParam && monthParam) {
+        const y = parseInt(yearParam);
+        const m = parseInt(monthParam);
+        datePrefix = `${y}-${String(m).padStart(2, '0')}`;
+      } else {
+        const now = new Date();
+        datePrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+
       let totalProjectedDaily = 0;
       let totalProjectedMonthly = 0;
       let totalProjectedAnnual = 0;
 
       const enrichedAccounts = db.bank_accounts.map(acc => {
-        const calcBalance = calculateAccountBalance(acc, db);
+        const calcBalance = calculateAccountBalance(acc, db, datePrefix);
         const isSavings = Number(acc.is_savings) === 1;
         const rate = Number(acc.interest_rate || acc.annual_return_rate) || 0;
 
