@@ -130,7 +130,7 @@ router.get('/annual', authenticateToken, async (req, res) => {
       const cyclic = cyclicRow[0]?.total || 0;
       const variable = variableRow[0]?.total || 0;
       const netBalance = inc - exp;
-      const savingsRate = inc > 0 ? parseFloat((((inc - exp) / inc) * 100).toFixed(1)) : 0;
+      const savingsRate = inc > 0 ? parseFloat(((sav / inc) * 100).toFixed(1)) : 0;
 
       monthlyTrend.push({
         month_number: m,

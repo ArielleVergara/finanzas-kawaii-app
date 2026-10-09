@@ -333,7 +333,7 @@ export default function AnalyticsCharts() {
             <span>Tasa de Ahorro Mensual (%)</span>
           </h3>
           <p className="text-xs text-[#4A3E3D]/70 dark:text-[#F5E8FB]/70 mb-4">
-            Porcentaje ahorrable sobre ingresos: (Ingresos - Gastos) / Ingresos
+            Porcentaje de ingresos destinados a ahorro: (Ahorros Destinados / Ingresos)
           </p>
 
           <div className="h-72 w-full">

@@ -235,20 +235,53 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
     }
   }
 
+  // --- HELPER DE CÁLCULO DE SALDO DISPONIBLE EN CUENTAS BANCARIAS ---
+  const calculateAccountBalance = (acc, dbData) => {
+    const paidIncomes = (dbData.incomes || [])
+      .filter(inc => inc.bank_account_id === acc.id && inc.status === 'pagado')
+      .reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
+
+    let paidExpenses = 0;
+    (dbData.expenses || []).forEach(exp => {
+      if (exp.bank_account_id === acc.id) {
+        const installments = (dbData.expense_installments || []).filter(ei => ei.expense_id === exp.id);
+        if (installments && installments.length > 0) {
+          installments.forEach(ei => {
+            if (ei.status === 'pagado') {
+              paidExpenses += Number(ei.amount) || 0;
+            }
+          });
+        } else if (exp.status === 'pagado') {
+          paidExpenses += Number(exp.total_amount) || 0;
+        }
+      }
+    });
+
+    const transfersIn = (dbData.transfers || [])
+      .filter(t => t.destination_account_id === acc.id || t.target_account_id === acc.id)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+    const transfersOut = (dbData.transfers || [])
+      .filter(t => t.origin_account_id === acc.id || t.source_account_id === acc.id)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+    if (acc.initial_balance === undefined) {
+      acc.initial_balance = Math.max(0, (Number(acc.balance) || 0) - paidIncomes + paidExpenses - transfersIn + transfersOut);
+    }
+
+    const initialBalance = Number(acc.initial_balance) || 0;
+    return initialBalance + paidIncomes - paidExpenses + transfersIn - transfersOut;
+  };
+
   // --- BANK ACCOUNTS ENDPOINTS ---
   if (path === '/api/bank-accounts') {
     if (method === 'GET') {
-      const totalBalance = db.bank_accounts.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
-      const totalCreditLimit = db.bank_accounts
-        .filter(a => Number(a.has_credit_card) === 1)
-        .reduce((sum, a) => sum + (Number(a.credit_limit) || 0), 0);
-
       let totalProjectedDaily = 0;
       let totalProjectedMonthly = 0;
       let totalProjectedAnnual = 0;
 
       const enrichedAccounts = db.bank_accounts.map(acc => {
-        const balance = Number(acc.balance) || 0;
+        const calcBalance = calculateAccountBalance(acc, db);
         const isSavings = Number(acc.is_savings) === 1;
         const rate = Number(acc.interest_rate || acc.annual_return_rate) || 0;
 
@@ -257,7 +290,7 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
         let annualYield = 0;
 
         if (isSavings && rate > 0) {
-          annualYield = balance * (rate / 100);
+          annualYield = calcBalance * (rate / 100);
           monthlyYield = annualYield / 12;
           dailyYield = annualYield / 365;
 
@@ -268,11 +301,17 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
 
         return {
           ...acc,
+          balance: calcBalance,
           projected_daily_yield: Math.round(dailyYield),
           projected_monthly_yield: Math.round(monthlyYield),
           projected_annual_yield: Math.round(annualYield)
         };
       });
+
+      const totalBalance = enrichedAccounts.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
+      const totalCreditLimit = enrichedAccounts
+        .filter(a => Number(a.has_credit_card) === 1)
+        .reduce((sum, a) => sum + (Number(a.credit_limit) || 0), 0);
 
       const projectedReturns = {
         daily: Math.round(totalProjectedDaily),
@@ -288,23 +327,29 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
       });
     }
     if (method === 'POST') {
+      const initialBal = Number(body.balance) || 0;
       const newAcc = {
         id: `acc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         user_id: 'local-user',
         institution_name: (body.institution_name || '').trim(),
         account_name: (body.account_name || '').trim(),
         account_number: (body.account_number || '').trim(),
-        balance: Number(body.balance) || 0,
+        initial_balance: initialBal,
+        balance: initialBal,
         color: body.color || '#E3D5FF',
         icon: body.icon || 'landmark',
+        has_debit_card: body.has_debit_card ? 1 : 0,
         has_credit_card: body.has_credit_card ? 1 : 0,
         credit_limit: Number(body.credit_limit) || 0,
         is_savings: body.is_savings ? 1 : 0,
-        interest_rate: Number(body.interest_rate) || 0
+        interest_rate: Number(body.interest_rate || body.annual_return_rate) || 0
       };
       db.bank_accounts.push(newAcc);
       saveLocalDB(db);
-      return makeResponse(newAcc, 201);
+      return makeResponse({
+        ...newAcc,
+        balance: calculateAccountBalance(newAcc, db)
+      }, 201);
     }
   }
 
@@ -316,21 +361,27 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
       if (method === 'PUT') {
         const index = db.bank_accounts.findIndex(a => a.id === accId);
         if (index !== -1) {
+          const newBase = Number(body.balance) !== undefined ? Number(body.balance) : (db.bank_accounts[index].initial_balance !== undefined ? db.bank_accounts[index].initial_balance : db.bank_accounts[index].balance);
           db.bank_accounts[index] = {
             ...db.bank_accounts[index],
             institution_name: (body.institution_name || db.bank_accounts[index].institution_name).trim(),
             account_name: (body.account_name || db.bank_accounts[index].account_name).trim(),
             account_number: (body.account_number || db.bank_accounts[index].account_number).trim(),
-            balance: Number(body.balance) !== undefined ? Number(body.balance) : db.bank_accounts[index].balance,
+            initial_balance: newBase,
             color: body.color || db.bank_accounts[index].color,
             icon: body.icon || db.bank_accounts[index].icon,
+            has_debit_card: body.has_debit_card !== undefined ? (body.has_debit_card ? 1 : 0) : db.bank_accounts[index].has_debit_card,
             has_credit_card: body.has_credit_card !== undefined ? (body.has_credit_card ? 1 : 0) : db.bank_accounts[index].has_credit_card,
             credit_limit: Number(body.credit_limit) || 0,
             is_savings: body.is_savings !== undefined ? (body.is_savings ? 1 : 0) : db.bank_accounts[index].is_savings,
-            interest_rate: Number(body.interest_rate) || 0
+            interest_rate: Number(body.interest_rate || body.annual_return_rate) || 0
           };
           saveLocalDB(db);
-          return makeResponse(db.bank_accounts[index]);
+          const updatedAcc = {
+            ...db.bank_accounts[index],
+            balance: calculateAccountBalance(db.bank_accounts[index], db)
+          };
+          return makeResponse(updatedAcc);
         }
         return makeResponse({ error: 'Cuenta no encontrada' }, 404);
       }
@@ -349,23 +400,16 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
 
   // --- TRANSFERS ENDPOINT ---
   if (path === '/api/transfers' && method === 'POST') {
-    const { origin_account_id, destination_account_id, amount, date, notes } = body;
+    const { origin_account_id, source_account_id, destination_account_id, amount, date, notes } = body;
+    const origId = origin_account_id || source_account_id || null;
+    const destId = destination_account_id || null;
     const numAmount = Number(amount) || 0;
-
-    if (origin_account_id) {
-      const orig = db.bank_accounts.find(a => a.id === origin_account_id);
-      if (orig) orig.balance = (Number(orig.balance) || 0) - numAmount;
-    }
-    if (destination_account_id) {
-      const dest = db.bank_accounts.find(a => a.id === destination_account_id);
-      if (dest) dest.balance = (Number(dest.balance) || 0) + numAmount;
-    }
 
     const transfer = {
       id: `tr-${Date.now()}`,
       user_id: 'local-user',
-      origin_account_id: origin_account_id || null,
-      destination_account_id: destination_account_id || null,
+      origin_account_id: origId,
+      destination_account_id: destId,
       amount: numAmount,
       date: date || todayStr,
       notes: notes || ''
@@ -406,11 +450,6 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
         is_recurring: body.is_recurring ? 1 : 0,
         recurrence_period: body.recurrence_period || 'monthly'
       };
-
-      if (newInc.bank_account_id && newInc.status === 'pagado') {
-        const ba = db.bank_accounts.find(a => a.id === newInc.bank_account_id);
-        if (ba) ba.balance = (Number(ba.balance) || 0) + newInc.amount;
-      }
 
       db.incomes.push(newInc);
       saveLocalDB(db);
@@ -1050,7 +1089,7 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
         cyclic_expenses: cyclic,
         variable_expenses: variable,
         net_balance: inc - exp,
-        savings_rate: inc > 0 ? parseFloat((((inc - exp) / inc) * 100).toFixed(1)) : 0
+        savings_rate: inc > 0 ? parseFloat(((sav / inc) * 100).toFixed(1)) : 0
       });
     }
 
