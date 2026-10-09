@@ -245,7 +245,7 @@ export default function BankAccountManager() {
     setIsSavings(acc.is_savings === 1);
     setAnnualReturnRate(acc.annual_return_rate || '');
     setReturnFrequency(acc.return_frequency || 'diario');
-    setBalance(acc.balance);
+    setBalance(acc.base_balance !== undefined ? acc.base_balance : (acc.initial_balance !== undefined ? acc.initial_balance : acc.balance));
     setHasDebitCard(acc.has_debit_card === 1);
     setHasCreditCard(acc.has_credit_card === 1);
     setCreditLimit(acc.credit_limit || '');

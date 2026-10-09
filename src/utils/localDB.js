@@ -265,11 +265,15 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
       .filter(t => t.origin_account_id === acc.id || t.source_account_id === acc.id)
       .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
-    if (acc.initial_balance === undefined) {
-      acc.initial_balance = Math.max(0, (Number(acc.balance) || 0) - paidIncomes + paidExpenses - transfersIn + transfersOut);
+    let baseBal = acc.base_balance;
+    if (baseBal === undefined || !acc._migrated_v2) {
+      baseBal = Math.max(0, (Number(acc.balance) || 0) - paidIncomes);
+      acc.base_balance = baseBal;
+      acc.initial_balance = baseBal;
+      acc._migrated_v2 = true;
     }
 
-    const initialBalance = Number(acc.initial_balance) || 0;
+    const initialBalance = Number(baseBal) || 0;
     return initialBalance + paidIncomes - paidExpenses + transfersIn - transfersOut;
   };
 
@@ -334,8 +338,10 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
         institution_name: (body.institution_name || '').trim(),
         account_name: (body.account_name || '').trim(),
         account_number: (body.account_number || '').trim(),
+        base_balance: initialBal,
         initial_balance: initialBal,
         balance: initialBal,
+        _migrated_v2: true,
         color: body.color || '#E3D5FF',
         icon: body.icon || 'landmark',
         has_debit_card: body.has_debit_card ? 1 : 0,
@@ -361,13 +367,15 @@ export const handleLocalApiRequest = async (urlStr, options = {}) => {
       if (method === 'PUT') {
         const index = db.bank_accounts.findIndex(a => a.id === accId);
         if (index !== -1) {
-          const newBase = Number(body.balance) !== undefined ? Number(body.balance) : (db.bank_accounts[index].initial_balance !== undefined ? db.bank_accounts[index].initial_balance : db.bank_accounts[index].balance);
+          const newBase = Number(body.balance) !== undefined ? Number(body.balance) : (db.bank_accounts[index].base_balance !== undefined ? db.bank_accounts[index].base_balance : db.bank_accounts[index].balance);
           db.bank_accounts[index] = {
             ...db.bank_accounts[index],
             institution_name: (body.institution_name || db.bank_accounts[index].institution_name).trim(),
             account_name: (body.account_name || db.bank_accounts[index].account_name).trim(),
             account_number: (body.account_number || db.bank_accounts[index].account_number).trim(),
+            base_balance: newBase,
             initial_balance: newBase,
+            _migrated_v2: true,
             color: body.color || db.bank_accounts[index].color,
             icon: body.icon || db.bank_accounts[index].icon,
             has_debit_card: body.has_debit_card !== undefined ? (body.has_debit_card ? 1 : 0) : db.bank_accounts[index].has_debit_card,
